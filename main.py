@@ -5,8 +5,8 @@ from fastapi.responses import HTMLResponse
 from services import get_wallet_info
 from crud import create_wallet_request, get_wallet_requests
 from database import get_db
-from models import Base  # Импортируем Base для создания таблиц
-from models import WalletRequest as DBWalletRequest  # Импортируем SQLAlchemy модель с псевдонимом
+from models import Base  
+from models import WalletRequest as DBWalletRequest  
 from sqlalchemy.orm import Session
 from database import engine
 from typing import Optional
@@ -37,7 +37,7 @@ def get_wallet_data(request: WalletRequestSchema):
     if not wallet_address.startswith("T") or len(wallet_address) != 34:
         raise HTTPException(status_code=400, detail="Invalid TRON address format")
 
-    retries = 10  # Максимальное количество попыток (включая первую)
+    retries = 10  
     attempt = 0
 
     while attempt < retries:
