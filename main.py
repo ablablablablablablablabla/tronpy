@@ -11,13 +11,13 @@ from sqlalchemy.orm import Session
 from database import engine
 from typing import Optional
 
-# Создание таблиц в базе данных
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 
-# Переименуем Pydantic модель
+
 class WalletRequestSchema(BaseModel):
     wallet_address: str
 
@@ -29,14 +29,11 @@ def read_root():
 
 @app.post("/wallet/")
 def get_wallet_data(request: WalletRequestSchema):
-    """
-    Ендпоинт для получения данных о кошельке.
-    При возникновении ошибки 401 выполняется повторная попытка.
-    """
+
     db: Session = next(get_db())
     wallet_address = request.wallet_address
 
-    # Проверка формата адреса
+
     if not wallet_address.startswith("T") or len(wallet_address) != 34:
         raise HTTPException(status_code=400, detail="Invalid TRON address format")
 
@@ -45,10 +42,9 @@ def get_wallet_data(request: WalletRequestSchema):
 
     while attempt < retries:
         try:
-            # Получаем данные о кошельке
+
             wallet_info = get_wallet_info(wallet_address)
 
-            # Записываем запрос в базу данных
             create_wallet_request(
                 db=db,
                 wallet_address=wallet_address,
@@ -57,7 +53,7 @@ def get_wallet_data(request: WalletRequestSchema):
                 energy=wallet_info["energy"]
             )
 
-            # Возвращаем данные клиенту
+
             return {
                 "wallet_address": wallet_address,
                 "trx_balance": wallet_info["trx_balance"],
@@ -69,10 +65,10 @@ def get_wallet_data(request: WalletRequestSchema):
             raise HTTPException(status_code=400, detail=str(ve))
 
         except RuntimeError as re:
-            # Проверяем, является ли ошибка 401
+
             if "401 Client Error" in str(re) and attempt < retries - 1:
                 attempt += 1
-                continue  # Повторяем попытку
+                continue 
             else:
                 raise HTTPException(status_code=500, detail=str(re))
 
@@ -82,21 +78,18 @@ def get_requests(
         page: int = Query(1, gt=0, description="Page number"),
         limit: int = Query(10, gt=0, le=100, description="Number of records per page")
 ):
-    """
-    Ендпоинт для получения списка последних запросов с пагинацией.
-    """
+
     db: Session = next(get_db())
     try:
-        # Вычисляем offset
+
         offset = (page - 1) * limit
 
-        # Получаем общее количество записей
-        total_count = db.query(DBWalletRequest).count()  # Используем импортированную модель
 
-        # Получаем записи с учетом пагинации
+        total_count = db.query(DBWalletRequest).count()  
+
+
         requests = get_wallet_requests(db, limit=limit, offset=offset)
 
-        # Формируем результат
         return {
             "total": total_count,
             "page": page,
@@ -108,7 +101,7 @@ def get_requests(
                     "trx_balance": req.trx_balance,
                     "bandwidth": req.bandwidth,
                     "energy": req.energy,
-                    "requested_at": req.requested_at.isoformat()  # Преобразуем datetime в строку
+                    "requested_at": req.requested_at.isoformat()  
                 } for req in requests
             ]
         }
@@ -117,9 +110,7 @@ def get_requests(
 
 @app.get("/front", response_class=HTMLResponse)
 def frontend():
-    """
-    Ендпоинт для отображения простого фронтенда.
-    """
+
     return """
     <!DOCTYPE html>
     <html lang="en">
